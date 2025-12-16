@@ -144,9 +144,20 @@ async def get_spread_zscore(
     window: int = Query(default=20, ge=5, le=100)
 ):
     """Compute spread and z-score for pairs trading."""
+    # Try OHLC-based calculation first
     result = await pairs_trading.compute_spread_and_zscore(
         symbol1.lower(), symbol2.lower(), timeframe, lookback, window
     )
+    
+    # If OHLC fails, fall back to tick-based calculation
+    if result.get('error'):
+        from app.analytics import tick_pairs_trading
+        result = await tick_pairs_trading.compute_spread_from_ticks(
+            symbol1.lower(), symbol2.lower(), 
+            tick_count=lookback, 
+            window=window
+        )
+    
     return result
 
 

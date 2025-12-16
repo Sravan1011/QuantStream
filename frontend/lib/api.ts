@@ -9,6 +9,7 @@ import type {
     ADFResponse,
     AlertsResponse,
     AlertTriggersResponse,
+    ExportResponse,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -113,11 +114,11 @@ class ApiClient {
 
     // Export
     async exportTicks(symbol: string, limit: number = 1000) {
-        return this.request<TicksResponse>(`/api/export/ticks/${symbol}?limit=${limit}`);
+        return this.request<ExportResponse>(`/api/export/ticks/${symbol}?limit=${limit}`);
     }
 
     async exportOHLC(symbol: string, timeframe: string = '1m', limit: number = 500) {
-        return this.request<OHLCResponse>(`/api/export/ohlc/${symbol}?timeframe=${timeframe}&limit=${limit}`);
+        return this.request<ExportResponse>(`/api/export/ohlc/${symbol}?timeframe=${timeframe}&limit=${limit}`);
     }
 }
 

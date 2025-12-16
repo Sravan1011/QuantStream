@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
+import { AlertCircle } from 'lucide-react';
 
 interface SpreadChartProps {
     symbol1: string;
@@ -12,16 +13,25 @@ interface SpreadChartProps {
 
 export function SpreadChart({ symbol1, symbol2 }: SpreadChartProps) {
     const { spreadData, timeframe, window, setSpreadData } = useStore();
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await api.getSpread(symbol1, symbol2, timeframe, 100, window);
-                if (!response.error) {
+                if (response.error) {
+                    setError(response.error);
+                    setLoading(false);
+                } else if (response.current_zscore !== undefined) {
                     setSpreadData(response);
+                    setError(null);
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error('Error fetching spread:', error);
+                setError('Unable to compute spread - OHLC data not available');
+                setLoading(false);
             }
         };
 
@@ -31,16 +41,39 @@ export function SpreadChart({ symbol1, symbol2 }: SpreadChartProps) {
         return () => clearInterval(interval);
     }, [symbol1, symbol2, timeframe, window, setSpreadData]);
 
-    if (!spreadData) {
+    if (loading || error || !spreadData) {
         return (
             <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-4">Spread & Z-Score</h3>
-                <p className="text-slate-400">Loading spread data...</p>
+                {loading ? (
+                    <p className="text-slate-400">Loading spread data...</p>
+                ) : (
+                    <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-yellow-400 font-semibold mb-2">
+                                    Spread Analysis Unavailable
+                                </p>
+                                <p className="text-slate-300 text-sm mb-2">
+                                    Pairs trading analytics require OHLC (candlestick) data, which is currently not available.
+                                </p>
+                                <p className="text-slate-400 text-xs">
+                                    💡 The resampling engine needs to be fixed to create OHLC candles from tick data.
+                                    Once available, this chart will show hedge ratio, spread, and z-score for mean reversion trading.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
 
-    const { current_zscore, current_spread, spread_mean, spread_std, hedge_ratio } = spreadData;
+    const { current_zscore, current_spread, spread_mean, spread_std, hedge_ratio, method, data_points } = spreadData;
+
+    // Check if using tick-based fallback
+    const isTickBased = method === 'tick_based';
 
     // Create visualization data
     const zscoreData = [
@@ -49,9 +82,22 @@ export function SpreadChart({ symbol1, symbol2 }: SpreadChartProps) {
 
     return (
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-white mb-4">
-                Spread & Z-Score: {symbol1.toUpperCase()} / {symbol2.toUpperCase()}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">
+                    Spread & Z-Score: {symbol1.toUpperCase()} / {symbol2.toUpperCase()}
+                </h3>
+                {isTickBased && (
+                    <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded">
+                        Tick-based
+                    </span>
+                )}
+            </div>
+
+            {isTickBased && (
+                <div className="mb-3 p-2 bg-blue-900/20 border border-blue-700/30 rounded text-xs text-blue-300">
+                    📊 Using {data_points} aligned tick samples (OHLC unavailable)
+                </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="bg-slate-800 rounded-lg p-3">
@@ -77,8 +123,8 @@ export function SpreadChart({ symbol1, symbol2 }: SpreadChartProps) {
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-slate-400">Current:</span>
                     <span className={`text-3xl font-bold ${Math.abs(current_zscore) > 2 ? 'text-red-400' :
-                            Math.abs(current_zscore) > 1 ? 'text-yellow-400' :
-                                'text-green-400'
+                        Math.abs(current_zscore) > 1 ? 'text-yellow-400' :
+                            'text-green-400'
                         }`}>
                         {current_zscore.toFixed(3)}
                     </span>

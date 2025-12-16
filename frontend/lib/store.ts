@@ -42,6 +42,8 @@ export interface SpreadData {
     current_zscore: number;
     price1: number;
     price2: number;
+    method?: string; // 'tick_based' or 'ohlc_based'
+    data_points?: number; // Number of aligned data points used
 }
 
 export interface Alert {

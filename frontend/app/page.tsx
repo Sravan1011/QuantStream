@@ -7,6 +7,10 @@ import { SpreadChart } from '@/components/charts/SpreadChart';
 import { StatsCard } from '@/components/StatsCard';
 import { ControlPanel } from '@/components/ControlPanel';
 import { AlertManager } from '@/components/AlertManager';
+import { TradingSignal } from '@/components/TradingSignal';
+import { DataExport } from '@/components/DataExport';
+import { CorrelationViewer } from '@/components/CorrelationViewer';
+import { ADFTest } from '@/components/ADFTest';
 import { Activity, Wifi, WifiOff } from 'lucide-react';
 
 export default function Dashboard() {
@@ -71,8 +75,9 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Right Column - Alerts & Additional Info */}
+          {/* Right Column - Trading Signal, Alerts & Additional Info */}
           <div className="col-span-12 lg:col-span-3 space-y-4">
+            {selectedSymbols.length >= 2 && <TradingSignal />}
             <AlertManager />
 
             {/* System Info */}
@@ -100,15 +105,9 @@ export default function Dashboard() {
             <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-white mb-3">Quick Actions</h3>
               <div className="space-y-2">
-                <button className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                  Export Data (CSV)
-                </button>
-                <button className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                  Run ADF Test
-                </button>
-                <button className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                  View Correlation
-                </button>
+                <DataExport />
+                <ADFTest />
+                <CorrelationViewer />
               </div>
             </div>
           </div>

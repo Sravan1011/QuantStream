@@ -14,6 +14,12 @@ export interface BasicStatsResponse extends BasicStats {
     stats?: string; // Optional field indicating data source (computed_from_ticks or computed_from_ohlc)
 }
 
+export interface ExportResponse {
+    filename: string;
+    data: string;
+    count: number;
+}
+
 export interface VolatilityResponse {
     volatility: number;
     rolling_volatility: number[];
