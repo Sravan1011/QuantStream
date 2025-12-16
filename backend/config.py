@@ -2,7 +2,7 @@
 Configuration settings for the trading analytics backend.
 """
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Union
 import os
 
 
@@ -17,8 +17,15 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # CORS - Changed to string to work with Railway
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Parse CORS_ORIGINS into a list."""
+        if isinstance(self.CORS_ORIGINS, str):
+            return [origin.strip() for origin in self.CORS_ORIGINS.split(',') if origin.strip()]
+        return [self.CORS_ORIGINS]
     
     # Database
     SQLITE_DB_PATH: str = "data/trading_data.db"
